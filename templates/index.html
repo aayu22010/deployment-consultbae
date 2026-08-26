@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConsultBae Audio Collection</title>
+    <meta name="description" content="Audio collection app for ConsultBae gig workers — record or upload audio submissions">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ══════════════════════════════════════════════════════════════
+           DESIGN SYSTEM
+           ══════════════════════════════════════════════════════════════ */
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2236;
+            --bg-card-hover: #1f2a42;
+            --bg-input: #0d1220;
+            --border: #2a3654;
+            --border-focus: #6366f1;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --accent-glow: rgba(99, 102, 241, 0.25);
+            --success: #22c55e;
+            --success-bg: rgba(34, 197, 94, 0.12);
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.12);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.12);
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+            --gradient-record: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 20px var(--accent-glow);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Ambient background ── */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 80%, rgba(99, 102, 241, 0.03) 0%, transparent 50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           LAYOUT
+           ══════════════════════════════════════════════════════════════ */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 24px 20px 60px;
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        /* ── Tabs ── */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 4px;
+            margin-bottom: 28px;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(99, 102, 241, 0.08);
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           SUBMIT TAB
+           ══════════════════════════════════════════════════════════════ */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            background: var(--accent-glow);
+        }
+
+        /* ── Form ── */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* ── Audio Source Selector ── */
+        .audio-source-toggle {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .source-btn {
+            flex: 1;
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+
+        .source-btn.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ── Recording Area ── */
+        .record-area {
+            text-align: center;
+            padding: 32px 20px;
+        }
+
+        .record-btn {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            border: 3px solid var(--border);
+            background: var(--bg-input);
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .record-btn .inner {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--danger);
+            transition: var(--transition);
+        }
+
+        .record-btn:hover {
+            border-color: var(--danger);
+            box-shadow: 0 0 24px rgba(239, 68, 68, 0.25);
+        }
+
+        .record-btn.recording {
+            border-color: var(--danger);
+            animation: recordPulse 1.5s ease-in-out infinite;
+        }
+
+        .record-btn.recording .inner {
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+        }
+
+        @keyframes recordPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
+            50% { box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
+        }
+
+        .record-label {
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .record-timer {
+            font-size: 24px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--danger);
+            margin-top: 8px;
+            display: none;
+        }
+
+        .record-timer.visible {
+            display: block;
+        }
+
+        /* ── Waveform ── */
+        .waveform-container {
+            margin-top: 16px;
+            height: 60px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            display: none;
+        }
+
+        .waveform-container.visible {
+            display: block;
+        }
+
+        .waveform-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ── Upload Area ── */
+        .upload-area {
+            display: none;
+        }
+
+        .upload-area.active {
+            display: block;
+        }
+
+        .record-section {
+            display: block;
+        }
+
+        .record-section.hidden {
+            display: none;
+        }
+
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.04);
+        }
+
+        .dropzone-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .dropzone-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .dropzone-text strong {
+            color: var(--accent);
+        }
+
+        .dropzone-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* ── Audio Preview ── */
+        .audio-preview {
+            display: none;
+            margin-top: 16px;
+            padding: 14px 18px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+
+        .audio-preview.visible {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .audio-preview .file-info {
+            flex: 1;
+        }
+
+        .audio-preview .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .audio-preview .file-size {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .audio-preview .remove-btn {
+            padding: 6px 12px;
+            background: var(--danger-bg);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 6px;
+            color: var(--danger);
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .audio-preview .remove-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .preview-player {
+            margin-top: 10px;
+        }
+
+        .preview-player audio {
+            width: 100%;
+            height: 36px;
+        }
+
+        /* ── Submit Button ── */
+        .submit-section {
+            margin-top: 24px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px 24px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-glow), var(--shadow-md);
+        }
+
+        .submit-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .submit-btn.loading {
+            pointer-events: none;
+        }
+
+        .submit-btn .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .submit-btn.loading .spinner {
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 14px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(120%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 380px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            background: #065f46;
+            color: #a7f3d0;
+            border: 1px solid #10b981;
+        }
+
+        .toast.error {
+            background: #7f1d1d;
+            color: #fecaca;
+            border: 1px solid #ef4444;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           SUBMISSIONS TAB
+           ══════════════════════════════════════════════════════════════ */
+        .submissions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .submissions-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .refresh-btn {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .refresh-btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .submission-count {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* ── Submission Card ── */
+        .submission-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+
+        .submission-card:hover {
+            border-color: rgba(99, 102, 241, 0.2);
+            background: var(--bg-card-hover);
+        }
+
+        .submission-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+
+        .submission-person {
+            flex: 1;
+        }
+
+        .submission-person .name {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .submission-person .phone {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .submission-person .matched-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: var(--success-bg);
+            color: var(--success);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+            border: 1px solid rgba(34, 197, 94, 0.15);
+        }
+
+        .submission-meta {
+            text-align: right;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .submission-filename {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        /* ── Audio Player Row ── */
+        .player-row {
+            margin-bottom: 14px;
+        }
+
+        .player-row audio {
+            width: 100%;
+            height: 40px;
+            border-radius: var(--radius-sm);
+        }
+
+        /* ── Properties Grid ── */
+        .props-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+        }
+
+        .prop-item {
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            border: 1px solid rgba(42, 54, 84, 0.5);
+        }
+
+        .prop-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .prop-value {
+            font-size: 15px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .noise-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .noise-clean {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .noise-moderate {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .noise-noisy {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .noise-unknown {
+            background: rgba(100, 116, 139, 0.15);
+            color: var(--text-muted);
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 15px;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .props-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .header h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Header -->
+    <header class="header">
+        <h1>ConsultBae Audio Collection</h1>
+        <p>Record or upload audio submissions</p>
+    </header>
+
+    <!-- Tabs -->
+    <div class="tabs" role="tablist">
+        <button class="tab-btn active" role="tab" data-tab="submit" id="tab-submit-btn">
+            Submit Audio
+        </button>
+        <button class="tab-btn" role="tab" data-tab="submissions" id="tab-submissions-btn">
+            Submissions
+        </button>
+    </div>
+
+    <!-- ═══════════════════════ SUBMIT TAB ═══════════════════════ -->
+    <div class="tab-content active" id="tab-submit">
+        <!-- Personal Info -->
+        <div class="card">
+            <div class="card-title">
+                <span class="icon">&#128100;</span>
+                Your Information
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="input-name">Full Name</label>
+                    <input type="text" id="input-name" placeholder="e.g. Priya Singh" autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="input-phone">Phone Number</label>
+                    <input type="tel" id="input-phone" placeholder="e.g. 9000000287" autocomplete="tel">
+                </div>
+            </div>
+        </div>
+
+        <!-- Audio Input -->
+        <div class="card">
+            <div class="card-title">
+                <span class="icon">&#127908;</span>
+                Audio
+            </div>
+
+            <!-- Source Toggle -->
+            <div class="audio-source-toggle">
+                <button class="source-btn active" data-source="record" id="source-record-btn">
+                    Record
+                </button>
+                <button class="source-btn" data-source="upload" id="source-upload-btn">
+                    Upload File
+                </button>
+            </div>
+
+            <!-- Record Section -->
+            <div class="record-section" id="record-section">
+                <div class="record-area">
+                    <button class="record-btn" id="record-btn" title="Click to start recording">
+                        <div class="inner"></div>
+                    </button>
+                    <div class="record-label" id="record-label">Click to start recording</div>
+                    <div class="record-timer" id="record-timer">00:00</div>
+
+                    <!-- Live Waveform -->
+                    <div class="waveform-container" id="waveform-container">
+                        <canvas class="waveform-canvas" id="waveform-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="upload-area" id="upload-section">
+                <div class="dropzone" id="dropzone">
+                    <div class="dropzone-icon">&#128193;</div>
+                    <div class="dropzone-text">
+                        Drop audio file here or <strong>click to browse</strong>
+                    </div>
+                    <div class="dropzone-hint">WAV, MP3, OGG, WebM, M4A, FLAC (max 50 MB)</div>
+                </div>
+                <input type="file" id="file-input" accept=".wav,.mp3,.ogg,.webm,.m4a,.flac,.aac" hidden>
+            </div>
+
+            <!-- Audio Preview -->
+            <div class="audio-preview" id="audio-preview">
+                <div class="file-info">
+                    <div class="file-name" id="preview-filename">recording.wav</div>
+                    <div class="file-size" id="preview-size">0 KB</div>
+                </div>
+                <button class="remove-btn" id="remove-audio-btn">Remove</button>
+            </div>
+            <div class="preview-player" id="preview-player" style="display:none">
+                <audio id="preview-audio" controls></audio>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="submit-section">
+            <button class="submit-btn" id="submit-btn" disabled>
+                <span class="spinner"></span>
+                <span class="btn-text">Submit Audio</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════ SUBMISSIONS TAB ═══════════════════════ -->
+    <div class="tab-content" id="tab-submissions">
+        <div class="submissions-header">
+            <h2>All Submissions <span class="submission-count" id="sub-count"></span></h2>
+            <button class="refresh-btn" id="refresh-btn">Refresh</button>
+        </div>
+        <div id="submissions-list">
+            <div class="empty-state">
+                <div class="empty-icon">&#127925;</div>
+                <p>No submissions yet</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   ConsultBae Audio Collection — Frontend Logic
+   ══════════════════════════════════════════════════════════════════════ */
+
+// ── State ──
+let audioBlob = null;
+let audioFilename = 'recording.wav';
+let mediaRecorder = null;
+let audioContext = null;
+let analyserNode = null;
+let isRecording = false;
+let recordingStartTime = 0;
+let timerInterval = null;
+let animationFrame = null;
+
+// ── DOM refs ──
+const $ = (id) => document.getElementById(id);
+
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabSubmit = $('tab-submit');
+const tabSubmissions = $('tab-submissions');
+
+const inputName = $('input-name');
+const inputPhone = $('input-phone');
+
+const sourceRecordBtn = $('source-record-btn');
+const sourceUploadBtn = $('source-upload-btn');
+const recordSection = $('record-section');
+const uploadSection = $('upload-section');
+
+const recordBtn = $('record-btn');
+const recordLabel = $('record-label');
+const recordTimer = $('record-timer');
+const waveformContainer = $('waveform-container');
+const waveformCanvas = $('waveform-canvas');
+const waveCtx = waveformCanvas.getContext('2d');
+
+const dropzone = $('dropzone');
+const fileInput = $('file-input');
+
+const audioPreview = $('audio-preview');
+const previewFilename = $('preview-filename');
+const previewSize = $('preview-size');
+const removeAudioBtn = $('remove-audio-btn');
+const previewPlayer = $('preview-player');
+const previewAudio = $('preview-audio');
+
+const submitBtn = $('submit-btn');
+const toast = $('toast');
+
+// ══════════════════════════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════════════════════════
+
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const tab = btn.dataset.tab;
+        tabSubmit.classList.toggle('active', tab === 'submit');
+        tabSubmissions.classList.toggle('active', tab === 'submissions');
+
+        if (tab === 'submissions') loadSubmissions();
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════════
+//  AUDIO SOURCE TOGGLE
+// ══════════════════════════════════════════════════════════════════════
+
+sourceRecordBtn.addEventListener('click', () => {
+    sourceRecordBtn.classList.add('active');
+    sourceUploadBtn.classList.remove('active');
+    recordSection.classList.remove('hidden');
+    uploadSection.classList.remove('active');
+});
+
+sourceUploadBtn.addEventListener('click', () => {
+    sourceUploadBtn.classList.add('active');
+    sourceRecordBtn.classList.remove('active');
+    recordSection.classList.add('hidden');
+    uploadSection.classList.add('active');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+//  RECORDING (WAV via ScriptProcessor / AudioWorklet)
+// ══════════════════════════════════════════════════════════════════════
+
+recordBtn.addEventListener('click', async () => {
+    if (isRecording) {
+        stopRecording();
+    } else {
+        await startRecording();
+    }
+});
+
+async function startRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                channelCount: 1,
+                sampleRate: 44100,
+                echoCancellation: true,
+                noiseSuppression: true,
+            }
+        });
+
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({
+            sampleRate: 44100,
+        });
+        const source = audioContext.createMediaStreamSource(stream);
+
+        // Analyser for waveform visualization
+        analyserNode = audioContext.createAnalyser();
+        analyserNode.fftSize = 2048;
+        source.connect(analyserNode);
+
+        // Use MediaRecorder to capture audio, then convert to WAV
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+            ? 'audio/webm;codecs=opus'
+            : 'audio/webm';
+
+        mediaRecorder = new MediaRecorder(stream, { mimeType });
+        const chunks = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) chunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+            stream.getTracks().forEach(t => t.stop());
+
+            const webmBlob = new Blob(chunks, { type: mimeType });
+
+            // Convert to WAV using AudioContext for analysis compatibility
+            try {
+                const wavBlob = await convertToWav(webmBlob);
+                setAudioBlob(wavBlob, 'recording.wav');
+            } catch(err) {
+                console.warn('WAV conversion failed, using WebM:', err);
+                setAudioBlob(webmBlob, 'recording.webm');
+            }
+        };
+
+        mediaRecorder.start(100); // collect in 100ms chunks
+        isRecording = true;
+        recordingStartTime = Date.now();
+
+        // UI updates
+        recordBtn.classList.add('recording');
+        recordLabel.textContent = 'Click to stop';
+        recordTimer.classList.add('visible');
+        waveformContainer.classList.add('visible');
+
+        // Start timer
+        timerInterval = setInterval(updateTimer, 100);
+
+        // Start waveform
+        drawWaveform();
+
+    } catch (err) {
+        console.error('Recording error:', err);
+        showToast('Microphone access denied or not available', 'error');
+    }
+}
+
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+    }
+    if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+    }
+
+    isRecording = false;
+    clearInterval(timerInterval);
+    cancelAnimationFrame(animationFrame);
+
+    recordBtn.classList.remove('recording');
+    recordLabel.textContent = 'Click to start recording';
+    recordTimer.classList.remove('visible');
+    waveformContainer.classList.remove('visible');
+}
+
+function updateTimer() {
+    const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+    const min = String(Math.floor(elapsed / 60)).padStart(2, '0');
+    const sec = String(elapsed % 60).padStart(2, '0');
+    recordTimer.textContent = `${min}:${sec}`;
+}
+
+function drawWaveform() {
+    if (!isRecording || !analyserNode) return;
+
+    animationFrame = requestAnimationFrame(drawWaveform);
+
+    const bufferLength = analyserNode.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyserNode.getByteTimeDomainData(dataArray);
+
+    const w = waveformCanvas.width = waveformCanvas.offsetWidth * 2;
+    const h = waveformCanvas.height = waveformCanvas.offsetHeight * 2;
+
+    waveCtx.clearRect(0, 0, w, h);
+    waveCtx.lineWidth = 2;
+    waveCtx.strokeStyle = '#6366f1';
+    waveCtx.beginPath();
+
+    const sliceWidth = w / bufferLength;
+    let x = 0;
+
+    for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = (v * h) / 2;
+        if (i === 0) waveCtx.moveTo(x, y);
+        else waveCtx.lineTo(x, y);
+        x += sliceWidth;
+    }
+
+    waveCtx.lineTo(w, h / 2);
+    waveCtx.stroke();
+}
+
+// ── WAV Conversion ──
+
+async function convertToWav(blob) {
+    const arrayBuffer = await blob.arrayBuffer();
+    const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+    tempCtx.close();
+
+    // Convert AudioBuffer to WAV
+    const numChannels = 1;
+    const sampleRate = audioBuffer.sampleRate;
+    const channelData = audioBuffer.getChannelData(0);
+    const length = channelData.length;
+
+    const wavBuffer = new ArrayBuffer(44 + length * 2);
+    const view = new DataView(wavBuffer);
+
+    // WAV header
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + length * 2, true);
+    writeString(view, 8, 'WAVE');
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);              // chunk size
+    view.setUint16(20, 1, true);               // PCM format
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * numChannels * 2, true); // byte rate
+    view.setUint16(32, numChannels * 2, true); // block align
+    view.setUint16(34, 16, true);              // bits per sample
+    writeString(view, 36, 'data');
+    view.setUint32(40, length * 2, true);
+
+    // PCM data
+    let offset = 44;
+    for (let i = 0; i < length; i++) {
+        const sample = Math.max(-1, Math.min(1, channelData[i]));
+        view.setInt16(offset, sample * 0x7FFF, true);
+        offset += 2;
+    }
+
+    return new Blob([wavBuffer], { type: 'audio/wav' });
+}
+
+function writeString(view, offset, str) {
+    for (let i = 0; i < str.length; i++) {
+        view.setUint8(offset + i, str.charCodeAt(i));
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  FILE UPLOAD
+// ══════════════════════════════════════════════════════════════════════
+
+dropzone.addEventListener('click', () => fileInput.click());
+
+dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+});
+
+dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('dragover');
+});
+
+dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+        handleFileSelect(e.dataTransfer.files[0]);
+    }
+});
+
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length > 0) {
+        handleFileSelect(fileInput.files[0]);
+    }
+});
+
+function handleFileSelect(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    const allowed = ['wav', 'mp3', 'ogg', 'webm', 'm4a', 'flac', 'aac'];
+    if (!allowed.includes(ext)) {
+        showToast(`Unsupported file type .${ext}`, 'error');
+        return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+        showToast('File too large (max 50 MB)', 'error');
+        return;
+    }
+    setAudioBlob(file, file.name);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  AUDIO BLOB MANAGEMENT
+// ══════════════════════════════════════════════════════════════════════
+
+function setAudioBlob(blob, filename) {
+    audioBlob = blob;
+    audioFilename = filename;
+
+    // Show preview
+    previewFilename.textContent = filename;
+    previewSize.textContent = formatBytes(blob.size);
+    audioPreview.classList.add('visible');
+
+    // Audio player
+    const url = URL.createObjectURL(blob);
+    previewAudio.src = url;
+    previewPlayer.style.display = 'block';
+
+    updateSubmitState();
+}
+
+function clearAudioBlob() {
+    audioBlob = null;
+    audioFilename = '';
+    audioPreview.classList.remove('visible');
+    previewPlayer.style.display = 'none';
+    previewAudio.src = '';
+    fileInput.value = '';
+    updateSubmitState();
+}
+
+removeAudioBtn.addEventListener('click', clearAudioBlob);
+
+function updateSubmitState() {
+    const hasName = inputName.value.trim().length > 0;
+    const hasPhone = inputPhone.value.trim().length > 0;
+    const hasAudio = audioBlob !== null;
+    submitBtn.disabled = !(hasName && hasPhone && hasAudio);
+}
+
+inputName.addEventListener('input', updateSubmitState);
+inputPhone.addEventListener('input', updateSubmitState);
+
+// ══════════════════════════════════════════════════════════════════════
+//  SUBMIT
+// ══════════════════════════════════════════════════════════════════════
+
+submitBtn.addEventListener('click', async () => {
+    if (submitBtn.disabled) return;
+
+    const name = inputName.value.trim();
+    const phone = inputPhone.value.trim();
+
+    if (!name || !phone || !audioBlob) return;
+
+    submitBtn.classList.add('loading');
+    submitBtn.querySelector('.btn-text').textContent = 'Submitting...';
+
+    try {
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('phone', phone);
+        formData.append('audio', audioBlob, audioFilename);
+
+        const res = await fetch('/api/submit', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            let msg = 'Audio submitted successfully!';
+            if (data.person_matched) {
+                msg += ` Matched to: ${data.person_matched}`;
+            }
+            showToast(msg, 'success');
+
+            // Reset form
+            inputName.value = '';
+            inputPhone.value = '';
+            clearAudioBlob();
+        } else {
+            showToast(data.error || 'Submission failed', 'error');
+        }
+    } catch (err) {
+        console.error('Submit error:', err);
+        showToast('Network error. Is the server running?', 'error');
+    } finally {
+        submitBtn.classList.remove('loading');
+        submitBtn.querySelector('.btn-text').textContent = 'Submit Audio';
+        updateSubmitState();
+    }
+});
+
+// ══════════════════════════════════════════════════════════════════════
+//  SUBMISSIONS LIST
+// ══════════════════════════════════════════════════════════════════════
+
+$('refresh-btn').addEventListener('click', loadSubmissions);
+
+async function loadSubmissions() {
+    const container = $('submissions-list');
+
+    try {
+        const res = await fetch('/api/submissions');
+        const data = await res.json();
+
+        $('sub-count').textContent = `(${data.length})`;
+
+        if (data.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">&#127925;</div>
+                    <p>No submissions yet</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = data.map(sub => `
+            <div class="submission-card">
+                <div class="submission-top">
+                    <div class="submission-person">
+                        <div class="name">
+                            ${esc(sub.name)}
+                            ${sub.matched_person
+                                ? `<span class="matched-badge">Matched: ${esc(sub.matched_person)}</span>`
+                                : ''}
+                        </div>
+                        <div class="phone">${esc(sub.phone)}</div>
+                    </div>
+                    <div class="submission-meta">
+                        <div class="submission-filename">${esc(sub.original_filename)}</div>
+                        <div>${formatBytes(sub.file_size_bytes)}</div>
+                        <div>${formatDate(sub.submitted_at)}</div>
+                    </div>
+                </div>
+
+                <div class="player-row">
+                    <audio controls preload="none" src="${sub.audio_url}"></audio>
+                </div>
+
+                <div class="props-grid">
+                    <div class="prop-item">
+                        <div class="prop-label">Duration</div>
+                        <div class="prop-value">${sub.duration_seconds ? sub.duration_seconds.toFixed(2) + ' s' : '—'}</div>
+                    </div>
+                    <div class="prop-item">
+                        <div class="prop-label">Sample Rate</div>
+                        <div class="prop-value">${sub.sample_rate_khz ? sub.sample_rate_khz + ' kHz' : '—'}</div>
+                    </div>
+                    <div class="prop-item">
+                        <div class="prop-label">Bitrate</div>
+                        <div class="prop-value">${sub.bitrate_kbps ? sub.bitrate_kbps + ' kbps' : '—'}</div>
+                    </div>
+                    <div class="prop-item">
+                        <div class="prop-label">Loudness</div>
+                        <div class="prop-value">${sub.loudness_db !== null && sub.loudness_db > -100 ? sub.loudness_db + ' dB' : '—'}</div>
+                    </div>
+                    <div class="prop-item">
+                        <div class="prop-label">Quality</div>
+                        <div class="prop-value">${noiseLabel(sub.noise_estimate)}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (err) {
+        console.error('Load submissions error:', err);
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">&#9888;</div>
+                <p>Failed to load submissions</p>
+            </div>`;
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════════════════
+
+function formatBytes(bytes) {
+    if (!bytes) return '0 B';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'Z');
+    return d.toLocaleString();
+}
+
+function noiseLabel(estimate) {
+    const map = {
+        'clean': '<span class="noise-badge noise-clean">Clean</span>',
+        'moderate_noise': '<span class="noise-badge noise-moderate">Moderate</span>',
+        'noisy': '<span class="noise-badge noise-noisy">Noisy</span>',
+        'unknown': '<span class="noise-badge noise-unknown">Unknown</span>',
+    };
+    return map[estimate] || map['unknown'];
+}
+
+function esc(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function showToast(message, type = 'success') {
+    toast.textContent = message;
+    toast.className = `toast ${type} show`;
+    setTimeout(() => toast.classList.remove('show'), 4000);
+}
+</script>
+
+</body>
+</html>
