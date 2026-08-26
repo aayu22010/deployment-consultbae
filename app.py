@@ -233,4 +233,8 @@ if __name__ == "__main__":
     print(f"  Uploads:  {UPLOAD_DIR}")
     print("  Open:     http://127.0.0.1:5000")
     print("=" * 60)
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    # Render assigns a PORT environment variable (usually 10000). 
+    # Fallback to 5000 for local development.
+    port = int(os.environ.get("PORT", 5000))
+    # host="0.0.0.0" is required to expose the server to the outside world
+    app.run(host="0.0.0.0", port=port)
