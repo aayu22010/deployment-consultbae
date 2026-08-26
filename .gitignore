@@ -1,0 +1,19 @@
+# Database
+consultbae.db
+
+# Audio Uploads
+uploads/
+*.wav
+*.mp3
+*.ogg
+*.webm
+*.m4a
+*.flac
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# Virtual Environment (if you created one)
+venv/
+env/
