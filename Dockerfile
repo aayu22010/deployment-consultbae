@@ -28,5 +28,4 @@ EXPOSE 5000
 # Run the pipeline sequentially: merge -> check -> tag -> start Flask app
 CMD sh -c "python merge_sources.py && \
            python check_db.py && \
-           python auto_tag.py && \
            python app.py"
